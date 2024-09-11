@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votum - Sobre el Proyecto</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Arial', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 900px;
+            text-align: center;
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 40px;
+        }
+        .main-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 40px;
+        }
+        .main-buttons div {
+            width: 150px;
+            height: 200px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .main-buttons div:hover {
+            background-color: #f1f1f1;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .main-buttons img {
+            max-width: 100%;
+            height: 100px;
+        }
+        .main-buttons p {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        .back-button {
+            color: white;
+            background-color: red;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 1.1rem;
+        }
+        .back-button:hover {
+            background-color: darkred;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>La Historia de Votum</h1>
+        
+        <div class="main-buttons">
+            <!-- Whitepaper button -->
+            <div onclick="window.open('https://whitepaper-link.com', '_blank')">
+                <img src="/static/images/WP.png" alt="Whitepaper">
+                <p>Whitepaper</p>
+            </div>
+            <!-- GitHub button -->
+            <div onclick="window.open('https://github.com/enlace-al-github', '_blank')">
+                <img src="/static/images/GH.png" alt="GitHub">
+                <p>Acceso a GitHub</p>
+            </div>
+            <!-- Equipo button -->
+            <div onclick="window.location.href='equipo.html'">
+                <img src="/static/images/Equipo.png" alt="Equipo">
+                <p>Equipo</p>
+            </div>
+        </div>
+
+        <a href="/" class="back-button">Volver a Inicio</a>
+
+        <div class="footer">
+            <p>© César Martínez, Julio López y Aneth López | 2024<br>Potenciado por tecnología Blockchain y smart contracts</p>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+
