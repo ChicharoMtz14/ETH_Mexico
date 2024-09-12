@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votum - Votación Política</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <style>
+        /* Estilos de tu página, mantenlos como están */
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            margin-top: 50px;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+        .candidate-card {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            transition: box-shadow 0.3s;
+        }
+        .candidate-card:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .candidate-photo {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 20px;
+        }
+        .btn-vote {
+            margin-left: auto;
+            background-color: #28a745;
+            color: white;
+            font-size: 1.1rem;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-vote:hover {
+            background-color: #218838;
+        }
+        .options-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .btn-confirm {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1.1rem;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-confirm:hover {
+            background-color: #0056b3;
+        }
+        .btn-cancel {
+            background-color: red;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1.1rem;
+            border-radius: 5px;
+            margin-left: 20px;
+        }
+        .btn-cancel:hover {
+            background-color: darkred;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #777;
+            text-align: center;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Elecciones Presidenciales 2024</h1>
+        <h2>Elige tu candidato preferido</h2>
+
+        <!-- Información de MetaMask -->
+        <div id="metaMaskStatus" class="text-center mb-4"></div>
+
+        <!-- Candidatos a votar -->
+        <div class="candidate-card">
+            <img src="/static/images/po.png" alt="Candidato 1" class="candidate-photo">
+            <div>
+                <h4>Candidato 1</h4>
+                <p>Partido Oficialista</p>
+            </div>
+            <button class="btn-vote" data-candidate="1">Votar por Candidato 1</button>
+        </div>
+
+        <div class="candidate-card">
+            <img src="/static/images/pf.png" alt="Candidato 2" class="candidate-photo">
+            <div>
+                <h4>Candidato 2</h4>
+                <p>Partido Futuro</p>
+            </div>
+            <button class="btn-vote" data-candidate="2">Votar por Candidato 2</button>
+        </div>
+
+        <div class="candidate-card">
+            <img src="/static/images/pe.png" alt="Candidato 3" class="candidate-photo">
+            <div>
+                <h4>Candidato 3</h4>
+                <p>Partido de la Esperanza</p>
+            </div>
+            <button class="btn-vote" data-candidate="3">Votar por Candidato 3</button>
+        </div>
+
+        <!-- Otras opciones -->
+        <div class="options-section">
+            <h3>Otras Opciones</h3>
+            <button class="btn btn-secondary btn-lg mb-3" data-candidate="4">Votar en Blanco</button>
+            <br>
+            <button class="btn btn-dark btn-lg" data-candidate="5">Votar Nulo</button>
+        </div>
+
+        <!-- Sección de confirmación -->
+        <div class="options-section">
+            <h3>Confirmar Voto</h3>
+            <p id="selectedOption" class="error-message">No has seleccionado ninguna opción aún.</p>
+            <button class="btn-confirm" id="confirmVote">Confirmar Voto</button>
+            <button class="btn-cancel" id="cancelVote">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© César Martínez, Julio López y Aneth López | 2024<br>Potenciado por tecnología Blockchain y smart contracts</p>
+    </div>
+
+    <script>
+        // Dirección del contrato desplegado
+        const contractAddress = 0x6e80d9FD2Bf3Faa9D755920973233d17423D9f82;
+
+        // Cargar el ABI desde un archivo JSON
+        async function loadABI() {
+            try {
+                console.log("Intentando cargar el ABI del contrato...");
+                
+                // Intentamos cargar el ABI desde el archivo JSON
+                const response = await fetch("/static/images/Votacion.json"); // Ruta al archivo ABI
+                console.log("Respuesta del fetch obtenida:", response);
+
+                // Verificamos si el response es exitoso
+                if (!response.ok) {
+                    throw new Error("No se pudo cargar el ABI. Status: " + response.status);
+                }
+
+                // Convertimos el response a JSON
+                const contractABI = await response.json();
+                console.log("ABI cargado correctamente:", contractABI);
+
+                // Conectar a Web3 y al contrato
+                if (window.ethereum) {
+                    console.log("MetaMask detectada. Intentando conectar a Web3...");
+                    const web3 = new Web3(window.ethereum);
+
+                    // Solicitamos las cuentas de MetaMask
+                    await ethereum.request({ method: 'eth_requestAccounts' });
+                    console.log("Cuentas de MetaMask obtenidas.");
+
+                    // Aseguramos que la dirección del contrato sea válida
+                    console.log("Dirección del contrato:", contractAddress);
+
+                    // Cargamos el contrato usando Web3
+                    const contract = new web3.eth.Contract(contractABI, contractAddress);
+                    console.log("Contrato cargado correctamente:", contract);
+
+                    // Aquí puedes interactuar con el contrato.
+                    // Ejemplo: obtener votos del candidato 1
+                    // const votosCandidato1 = await contract.methods.votosCandidato1().call();
+                    // console.log("Votos para el candidato 1: ", votosCandidato1);
+                } else {
+                    console.error("MetaMask no está instalada.");
+                    alert('MetaMask no está instalado.');
+                }
+            } catch (error) {
+                console.error('Error cargando el ABI o conectando a MetaMask:', error);
+            }
+        }
+
+        const contractABI_final = loadABI();
+    </script>
+
+    <script>
+        let selectedCandidate = null;
+        let userAccount = null;
+        let contractInstance = null;
+
+        // Verificar conexión con MetaMask
+        async function connectMetaMask() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    console.log("MetaMask detectada.");
+                    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                    console.log("Cuentas obtenidas:", accounts);
+                    userAccount = accounts[0];
+                    document.getElementById('metaMaskStatus').innerText = "MetaMask conectada: " + userAccount;
+                    
+                    const web3 = new Web3(window.ethereum);
+                    console.log("Web3 inicializado:", web3);
+
+                    contractInstance = new web3.eth.Contract(contractABI_final, contractAddress);
+                    console.log("Contrato cargado correctamente:", contractInstance);
+                } catch (error) {
+                    console.error("Error al conectar MetaMask:", error);
+                    document.getElementById('metaMaskStatus').innerText = "Error al conectar MetaMask.";
+                }
+            } else {
+                alert("MetaMask no está instalada. Por favor, instala MetaMask.");
+                console.log("MetaMask no detectada.");
+            }
+        }
+
+        // Detectar selección de voto
+        document.querySelectorAll('.btn-vote').forEach(function(button) {
+            button.addEventListener('click', function () {
+                selectedCandidate = this.getAttribute('data-candidate');
+                document.getElementById('selectedOption').innerText = "Has seleccionado: Opción " + selectedCandidate;
+                document.getElementById('selectedOption').style.color = 'black';
+            });
+        });
+
+        // Confirmar voto
+        document.getElementById('confirmVote').addEventListener('click', async function () {
+            if (!selectedCandidate) {
+                document.getElementById('selectedOption').innerText = "Debes seleccionar una opción antes de confirmar.";
+                document.getElementById('selectedOption').style.color = 'red';
+            } else {
+                try {
+                    await contractInstance.methods.votar(selectedCandidate).send({ from: userAccount });
+                    alert("Voto confirmado por: Opción " + selectedCandidate);
+                } catch (error) {
+                    console.error("Error al enviar la transacción:", error);
+                    alert("Error al confirmar el voto.");
+                }
+            }
+        });
+
+        // Cancelar voto
+        document.getElementById('cancelVote').addEventListener('click', function () {
+            const confirmCancel = confirm("¿Estás seguro de que deseas cancelar tu voto? Perderás el progreso.");
+            if (confirmCancel) {
+                window.location.href = "/"; // Redirigir a la pantalla de inicio
+            }
+        });
+
+        // Conectar MetaMask al cargar la página
+        window.addEventListener('DOMContentLoaded', connectMetaMask);
+    </script>
+
+</body>
+</html>

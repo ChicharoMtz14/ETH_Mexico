@@ -26,6 +26,10 @@ def resultados():
 def equipo():
     return render_template('equipo.html')
 
+@app.route('/votar')
+def votar():
+    return render_template('votar.html')
+
 # Iniciar la aplicación
 if __name__ == "__main__":
     app.run(debug=True)
