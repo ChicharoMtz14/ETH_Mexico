@@ -3,15 +3,381 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generar Nueva Votación</title>
-    <link rel="icon" type="image/x-icon" href="/static/images/VT.ico">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Votum - Generar Nueva Votación</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js">
+    </script>
+
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-section {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .form-section h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .btn-custom {
+            background-color: #007bff;
+            color: white;
+            font-size: 1.1rem;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-custom:hover {
+            background-color: #0056b3;
+        }
+        .preview-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+        }
+        .preview-section h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #777;
+            text-align: center;
+        }
+        .option-input {
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
-<body class="text-center">
+<body>
+
     <div class="container">
-        <h1 class="mt-5">Generar Nueva Votación</h1>
-        <p class="mt-4">Aquí se podrá configurar una nueva votación.</p>
-        <a href="/" class="btn btn-primary btn-lg btn-block">Volver a Inicio</a>
+        <h1>Generar Nueva Votación</h1>
+
+        <!-- Formulario de creación de votación -->
+        <div class="form-section">
+            <h3>Información de la Votación</h3>
+            <form id="votacionForm">
+                <div class="form-group">
+                    <label for="titulo">Título de la Votación:</label>
+                    <input type="text" class="form-control" id="titulo" placeholder="Ingresa el título de la votación">
+                </div>
+                <div class="form-group">
+                    <label for="descripcion">Descripción:</label>
+                    <textarea class="form-control" id="descripcion" rows="3" placeholder="Describe el propósito de la votación"></textarea>
+                </div>
+
+                <!-- Opciones de votación -->
+                <h3>Opciones de Votación</h3>
+                <div id="opcionesContainer">
+                    <div class="form-group option-input">
+                        <label for="opcion1">Opción 1:</label>
+                        <input type="text" class="form-control" id="opcion1" placeholder="Ingrese una opción">
+                    </div>
+                    <div class="form-group option-input">
+                        <label for="opcion2">Opción 2:</label>
+                        <input type="text" class="form-control" id="opcion2" placeholder="Ingrese una opción">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-info" id="addOptionBtn">Añadir Opción</button>
+
+                <!-- Duración de la votación -->
+                <h3>Duración de la Votación</h3>
+                <div class="form-group">
+                    <label for="fechaInicio">Fecha de Inicio:</label>
+                    <input type="datetime-local" class="form-control" id="fechaInicio">
+                </div>
+                <div class="form-group">
+                    <label for="fechaFin">Fecha de Cierre:</label>
+                    <input type="datetime-local" class="form-control" id="fechaFin">
+                </div>
+
+                <!-- Acceso a la votación -->
+                <h3>Acceso a la Votación</h3>
+                <div class="form-group">
+                    <label for="acceso">Acceso a la votación:</label><br>
+                    <input type="radio" id="publica" name="acceso" value="publica" checked>
+                    <label for="publica">Pública</label>
+                    <input type="radio" id="privada" name="acceso" value="privada">
+                    <label for="privada">Privada</label>
+                </div>
+
+                <!-- Botones de acción -->
+                <button type="button" class="btn btn-custom" id="previewBtn">Vista Previa</button>
+                
+                <button type="button" class="btn btn-success" id="createVoteBtn">Crear Votación</button>
+                <script>
+                    window.addEventListener('DOMContentLoaded', () => {
+                        const createVoteBtn = document.getElementById('createVoteBtn');
+                        const statusDisplay = document.getElementById('status');
+                        let userAccount;
+                
+                        // Función para validar los campos del formulario
+                        function validarFormulario() {
+                            const titulo = document.getElementById('titulo').value;
+                            const descripcion = document.getElementById('descripcion').value;
+                            const inicio = document.getElementById('fechaInicio').value;
+                            const fin = document.getElementById('fechaFin').value;
+                            const acceso = document.querySelector('input[name="acceso"]:checked');
+                
+                            let errores = [];
+                
+                            // Validar título
+                            if (titulo.trim() === '') {
+                                errores.push("Título");
+                                mostrarError("titulo", "El campo título es obligatorio.");
+                            } else {
+                                ocultarError("titulo");
+                            }
+                
+                            // Validar descripción
+                            if (descripcion.trim() === '') {
+                                errores.push("Descripción");
+                                mostrarError("descripcion", "El campo descripción es obligatorio.");
+                            } else {
+                                ocultarError("descripcion");
+                            }
+                
+                            // Validar opciones
+                            const opciones = [];
+                            for (let i = 1; i <= optionCount; i++) {
+                                const opcion = document.getElementById(`opcion${i}`).value.trim();
+                                if (opcion) {
+                                    opciones.push(opcion);
+                                }
+                            }
+                
+                            if (opciones.length < 2) {
+                                errores.push("Opciones");
+                                mostrarError("opcionesContainer", "Debe haber al menos dos opciones.");
+                            } else if (new Set(opciones).size !== opciones.length) {
+                                errores.push("Opciones (duplicadas)");
+                                mostrarError("opcionesContainer", "Las opciones no pueden repetirse.");
+                            } else {
+                                ocultarError("opcionesContainer");
+                            }
+                
+                            // Validar fechas
+                            const inicioDate = new Date(inicio);
+                            const finDate = new Date(fin);
+                            if (inicio.trim() === '') {
+                                errores.push("Fecha de inicio");
+                                mostrarError("fechaInicio", "El campo fecha de inicio es obligatorio.");
+                            } else if (fin.trim() === '') {
+                                errores.push("Fecha de fin");
+                                mostrarError("fechaFin", "El campo fecha de fin es obligatorio.");
+                            } else if (inicioDate >= finDate) {
+                                errores.push("Fechas (inválidas)");
+                                mostrarError("fechaInicio", "La fecha de inicio debe ser anterior a la fecha de fin.");
+                                mostrarError("fechaFin", "La fecha de fin debe ser posterior a la de inicio.");
+                            } else {
+                                ocultarError("fechaInicio");
+                                ocultarError("fechaFin");
+                            }
+                
+                            // Validar acceso
+                            if (!acceso) {
+                                errores.push("Acceso");
+                                mostrarError("acceso", "Debe seleccionar un tipo de acceso.");
+                            } else {
+                                ocultarError("acceso");
+                            }
+                
+                            return errores;
+                        }
+                
+                        // Mostrar mensaje de error en los campos
+                        function mostrarError(campoId, mensaje) {
+                            const errorContainer = document.getElementById(`${campoId}-error`);
+                
+                            if (!errorContainer) {
+                                const errorElement = document.createElement("div");
+                                errorElement.id = `${campoId}-error`;
+                                errorElement.className = "error-message";
+                                errorElement.style.color = "red";
+                                errorElement.style.marginTop = "5px";
+                                errorElement.innerText = mensaje;
+                                const campo = document.getElementById(campoId);
+                                campo.parentNode.appendChild(errorElement);
+                            }
+                        }
+                
+                        // Ocultar mensaje de error en los campos
+                        function ocultarError(campoId) {
+                            const errorContainer = document.getElementById(`${campoId}-error`);
+                            if (errorContainer) {
+                                errorContainer.remove();
+                            }
+                        }
+                
+                        // Verificar si MetaMask está disponible
+                        if (typeof window.ethereum !== 'undefined') {
+                            console.log("MetaMask detectada");
+                
+                            // Manejar la conexión de MetaMask
+                            ethereum.request({ method: 'eth_accounts' }).then(handleAccountsChanged).catch(console.error);
+                
+                            // Al hacer clic en "Crear Votación"
+                            createVoteBtn.addEventListener('click', async () => {
+                                // Validar los campos del formulario
+                                const errores = validarFormulario();
+                                if (errores.length > 0) {
+                                    alert("Hay errores en el formulario. Por favor, corrige los errores antes de continuar.");
+                                    return;
+                                }
+                
+                                // Verificar si hay una wallet conectada
+                                if (!userAccount) {
+                                    alert("Debe conectar su wallet MetaMask antes de crear la votación.");
+                                    return;
+                                }
+                
+                                // Lógica de votación con contrato inteligente
+                                try {
+                                    const titulo = document.getElementById('titulo').value;
+                                    const descripcion = document.getElementById('descripcion').value;
+                                    const opciones = [];
+                                    for (let i = 1; i <= optionCount; i++) {
+                                        const opcion = document.getElementById(`opcion${i}`).value.trim();
+                                        if (opcion) {
+                                            opciones.push(opcion);
+                                        }
+                                    }
+                                    const inicio = document.getElementById('fechaInicio').value;
+                                    const fin = document.getElementById('fechaFin').value;
+                                    const acceso = document.querySelector('input[name="acceso"]:checked').value;
+                
+                                    // Aquí se insertaría la lógica para enviar los datos a través de un contrato inteligente
+                                    const transaction = await ethereum.request({
+                                        method: 'eth_sendTransaction',
+                                        params: [
+                                            {
+                                                from: userAccount,
+                                                to: 'DIRECCION_DEL_CONTRATO',
+                                                value: '0x0',
+                                                data: 'CODIGO_ABI_CON_DATOS', // Datos de la votación (ABI)
+                                            },
+                                        ],
+                                    });
+                
+                                    statusDisplay.innerText = "Votación creada exitosamente. Hash de la transacción: " + transaction;
+                                } catch (error) {
+                                    console.error(error);
+                                    statusDisplay.innerText = "Error al crear la votación.";
+                                }
+                            });
+                        } else {
+                            alert("MetaMask no está instalada. Por favor, instale MetaMask para continuar.");
+                        }
+                
+                        function handleAccountsChanged(accounts) {
+                            if (accounts.length === 0) {
+                                console.log('MetaMask no está conectada');
+                                statusDisplay.innerText = "Desconectado";
+                            } else {
+                                userAccount = accounts[0];
+                                console.log("Conectado a la cuenta: " + userAccount);
+                                statusDisplay.innerText = "Conectado a: " + userAccount;
+                            }
+                        }
+                    });
+                </script>
+                
+                <!-- Botón de Cancelar con advertencia -->
+                <button type="button" class="btn btn-danger" id="cancelBtn">Cancelar</button>
+
+                <script>
+                    const cancelBtn = document.getElementById('cancelBtn');
+
+                    cancelBtn.addEventListener('click', () => {
+                        const confirmation = confirm("Estás a punto de salir y perderás el progreso de la votación. ¿Estás seguro?");
+                        if (confirmation) {
+                            // Redirigir a la pantalla de inicio
+                            window.location.href = "/";
+                        }
+                    });
+                </script>
+            </form>
+        </div>
+
+        <!-- Sección de Vista Previa -->
+        <div class="preview-section">
+            <h3>Vista Previa de la Votación</h3>
+            <p id="previewTitulo"></p>
+            <p id="previewDescripcion"></p>
+            <p id="previewOpciones"></p>
+            <p id="previewFecha"></p>
+            <p id="previewAcceso"></p>
+        </div>
+
+        <div class="footer">
+            <p>©© César Martínez, Julio López y Aneth López | 2024 <br>Potenciado por tecnología Blockchain y smart contracts </p>
+        </div>
     </div>
+
+    <!-- Script para agregar opciones dinámicamente y mostrar vista previa -->
+    <script>
+        const addOptionBtn = document.getElementById('addOptionBtn');
+        const opcionesContainer = document.getElementById('opcionesContainer');
+        let optionCount = 2;
+
+        addOptionBtn.addEventListener('click', () => {
+            optionCount++;
+            const newOption = document.createElement('div');
+            newOption.classList.add('form-group', 'option-input');
+            newOption.innerHTML = `
+                <label for="opcion${optionCount}">Opción ${optionCount}:</label>
+                <input type="text" class="form-control" id="opcion${optionCount}" placeholder="Ingrese una opción">
+            `;
+            opcionesContainer.appendChild(newOption);
+        });
+
+        const previewBtn = document.getElementById('previewBtn');
+        previewBtn.addEventListener('click', () => {
+            const titulo = document.getElementById('titulo').value;
+            const descripcion = document.getElementById('descripcion').value;
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+            const acceso = document.querySelector('input[name="acceso"]:checked').value;
+
+            // Mostrar en la vista previa
+            document.getElementById('previewTitulo').innerText = `Título: ${titulo}`;
+            document.getElementById('previewDescripcion').innerText = `Descripción: ${descripcion}`;
+            
+            // Recopilar opciones
+            const opciones = [];
+            for (let i = 1; i <= optionCount; i++) {
+                const opcionValue = document.getElementById(`opcion${i}`).value;
+                if (opcionValue) {
+                    opciones.push(opcionValue);
+                }
+            }
+            document.getElementById('previewOpciones').innerText = `Opciones: ${opciones.join(', ')}`;
+            document.getElementById('previewFecha').innerText = `Duración: Desde ${fechaInicio} hasta ${fechaFin}`;
+            document.getElementById('previewAcceso').innerText = `Acceso: ${acceso}`;
+        });
+    </script>
+
 </body>
 </html>
